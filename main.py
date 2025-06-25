@@ -1,3 +1,17 @@
+import os
+import sys
+
+# redirect stdout and stderr
+# fixes https://github.com/huggingface/diffusers/issues/3290
+if sys.stdout is None or sys.stderr is None:
+    sys.stdout = open(os.devnull, "w")
+    sys.stderr = open(os.devnull, "w")
+
+# macOS packaging support
+from multiprocessing import freeze_support  # noqa
+
+freeze_support()  # noqa
+
 from duit.ui.nicegui.NiceGUIPropertyPanel import NiceGUIPropertyPanel
 from duit.ui.nicegui.NiceGUIPropertyRegistry import init_nicegui_registry
 from nicegui import ui
