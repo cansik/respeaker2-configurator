@@ -41,6 +41,7 @@ class RespeakerService:
         self.on_connected = Event["RespeakerService"]()
         self.on_disconnected = Event["RespeakerService"]()
         self.on_error = Event[str]()
+        self.on_poll = Event["RespeakerService"]()
 
     @property
     def connected(self) -> bool:
@@ -174,6 +175,7 @@ class RespeakerService:
                     reg.silent = True
                     reg.field.value = val
                     reg.silent = False
+                self.on_poll(self)
                 time.sleep(interval)
 
         self._thread = threading.Thread(target=poll_loop, daemon=True)
