@@ -6,7 +6,7 @@ the [ReSpeaker Mic Array v2.0](https://wiki.seeedstudio.com/ReSpeaker_Mic_Array_
 This tool allows you to easily connect to your ReSpeaker device, view its status, and adjust its configuration
 parameters through an intuitive interface.
 
-![App](images/app.png)
+<img width="512" src="images/app.png">
 
 ## Features
 
