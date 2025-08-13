@@ -119,14 +119,14 @@ class App:
 
         app.on_startup(self.on_startup)
         app.on_connect(self.on_window_opened)
-        app.on_disconnect(self.on_window_closed)
+        app.on_shutdown(self.on_window_closed)
 
         ui.run(
             title="ReSpeaker2 Configurator",
             native=True,
             window_size=(600, 800),
             reload=False,
-            show_welcome_message=False,
+            show_welcome_message=False
         )
 
 
