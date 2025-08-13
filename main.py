@@ -107,6 +107,10 @@ class App:
         self.is_first_run = False
         self.service.connect()
 
+    def on_window_closed(self):
+        # cleanup
+        self.service.close()
+
     def run(self) -> None:
         @ui.page("/")
         def index_page():
@@ -115,6 +119,7 @@ class App:
 
         app.on_startup(self.on_startup)
         app.on_connect(self.on_window_opened)
+        app.on_disconnect(self.on_window_closed)
 
         ui.run(
             title="ReSpeaker2 Configurator",
@@ -123,9 +128,6 @@ class App:
             reload=False,
             show_welcome_message=False,
         )
-
-        # cleanup
-        self.service.close()
 
 
 def main():

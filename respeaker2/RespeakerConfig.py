@@ -9,7 +9,7 @@ class RespeakerConfig:
     def __init__(self):
         container = ContainerHelper(self)
 
-        with container.section("Acoustic Echo Cancellation"):
+        with container.section("Acoustic Echo Cancellation", collapsed=True):
             self.aec_freeze_on_off = (
                     DataField(0)
                     | ui.Boolean(
@@ -74,7 +74,7 @@ class RespeakerConfig:
                     | RespeakerParam(18, 31, 'int', 1, 0, 'ro')
             )
 
-        with container.section("Automatic Gain Control"):
+        with container.section("Automatic Gain Control", collapsed=True):
             self.agc_on_off = (
                     DataField(0)
                     | ui.Boolean(
@@ -124,7 +124,7 @@ class RespeakerConfig:
                     | RespeakerParam(19, 4, 'float', 1.0, 0.1, 'rw')
             )
 
-        with container.section("Pre-processing"):
+        with container.section("Pre-processing", collapsed=True):
             self.hpf_on_off = (
                     DataField(0)
                     | ui.Options(
@@ -135,7 +135,7 @@ class RespeakerConfig:
                     | RespeakerParam(18, 27, 'int', 3, 0, 'rw')
             )
 
-        with container.section("Beamforming"):
+        with container.section("Beamforming", collapsed=True):
             self.beamformer_freeze = (
                     DataField(0)
                     | ui.Boolean(
@@ -145,7 +145,7 @@ class RespeakerConfig:
                     | RespeakerParam(19, 6, 'int', 1, 0, 'rw')
             )
 
-        with container.section("Noise Suppression"):
+        with container.section("Noise Suppression", collapsed=True):
             self.cni_on_off = (
                     DataField(0)
                     | ui.Boolean(
@@ -211,7 +211,7 @@ class RespeakerConfig:
                     | RespeakerParam(19, 13, 'float', 1.0, 0.0, 'rw')
             )
 
-        with container.section("Echo Suppression"):
+        with container.section("Echo Suppression", collapsed=True):
             self.echo_suppression = (
                     DataField(0)
                     | ui.Boolean(
@@ -276,7 +276,7 @@ class RespeakerConfig:
                     | RespeakerParam(19, 29, 'int', 1, 0, 'rw')
             )
 
-        with container.section("Voice & DOA"):
+        with container.section("Voice & DOA", collapsed=True):
             self.speech_detected = (
                     DataField(0)
                     | ui.Boolean(
@@ -305,7 +305,7 @@ class RespeakerConfig:
                     | RespeakerParam(21, 0, 'int', 359, 0, 'ro')
             )
 
-        with container.section("ASR Noise Suppression"):
+        with container.section("ASR Noise Suppression", collapsed=True):
             self.stat_noise_asr = (
                     DataField(0)
                     | ui.Boolean(
