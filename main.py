@@ -8,6 +8,7 @@ from typing import Optional
 from usb.core import USBError
 
 from respeaker2.RespeakerDFU import RespeakerDFU
+from respeaker2.RespeakerDiscovery import RespeakerDiscovery, DiscoveredDevice, DeviceKey
 
 # suppress stdout/stderr and macOS in frozen builds
 if sys.stdout is None or sys.stderr is None:
@@ -39,6 +40,10 @@ class App:
         self.is_connected = DataField(self.service.connected)
         self.is_connected.on_changed += lambda _: self.apply_status()
 
+        self.discovery = RespeakerDiscovery()
+        self.discovery.on_device_discovered += self._on_device_discovered
+        self.discovery.on_device_removed += self._on_device_removed
+
         self.service.on_connected += self._on_connected
         self.service.on_disconnected += self._on_disconnected
         self.service.on_error += self._on_error
@@ -53,20 +58,28 @@ class App:
         self._reset_button: Optional[ui.button] = None
 
         self.is_first_run = True
-        self.suppress_connection_notifications = False
+        self.in_maintenance_mode = False
+
+    def _on_device_discovered(self, device: DiscoveredDevice):
+        if self.in_maintenance_mode:
+            return
+
+        if not self.service.connected:
+            self.service.connect()
+
+    def _on_device_removed(self, device_key: DeviceKey):
+        if self.in_maintenance_mode:
+            return
+
+        if self.service.connected:
+            self.service.disconnect()
 
     def _on_connected(self, _):
         self.is_connected.value = True
-
-        if self.suppress_connection_notifications:
-            return
         self.notify_ui("Device connected!", type="positive")
 
     def _on_disconnected(self, _):
         self.is_connected.value = False
-
-        if self.suppress_connection_notifications:
-            return
         self.notify_ui("Device disconnected!", type="info")
 
     def _on_error(self, message: str) -> None:
@@ -87,6 +100,7 @@ class App:
         if not await self._ask_question("Are you sure?", true_answer="Reset", false_answer="Abort"):
             return
 
+        self.in_maintenance_mode = True
         n = ui.notification(timeout=None, spinner=True, icon="restart_alt")
 
         n.message = "disconnecting device..."
@@ -114,6 +128,7 @@ class App:
                 n.dismiss()
                 ui.notify("Error resetting device!", type="negative")
                 await asyncio.sleep(0.1)
+                self.in_maintenance_mode = False
                 return
 
         n.message = "waiting for device..."
@@ -127,6 +142,7 @@ class App:
 
         ui.notify("Device has been reset!", type="positive")
         await asyncio.sleep(0.1)
+        self.in_maintenance_mode = False
 
     def apply_status(self):
         if self.is_connected.value:
@@ -175,10 +191,11 @@ class App:
         if not self.is_first_run:
             return
         self.is_first_run = False
-        self.service.connect()
+        self.discovery.start()
 
     def on_window_closed(self):
         # cleanup
+        self.discovery.stop()
         self.service.close()
 
     def run(self) -> None:
