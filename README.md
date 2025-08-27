@@ -43,6 +43,14 @@ uv run python main.py
 
 This will launch the GUI. Make sure your ReSpeaker Mic Array v2.0 is connected via USB.
 
+### Development
+
+Please use ruff to check your code before contributing.
+
+```sh
+uv run ruff check .
+```
+
 ---
 
 **Note:**  
