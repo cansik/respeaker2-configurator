@@ -4,6 +4,10 @@ from datetime import datetime
 from multiprocessing import freeze_support
 from typing import Optional
 
+from duit.annotation.AnnotationFinder import AnnotationFinder
+
+from respeaker2.RespeakerParam import RespeakerParam
+
 # suppress stdout/stderr and macOS in frozen builds
 if sys.stdout is None or sys.stderr is None:
     sys.stdout = open(os.devnull, "w")
@@ -45,6 +49,7 @@ class App:
         self._last_updated_label: Optional[ui.label] = None
         self._status_label: Optional[ui.label] = None
         self._status_icon: Optional[ui.icon] = None
+        self._reset_button: Optional[ui.button] = None
 
         self.is_first_run = True
 
@@ -60,6 +65,27 @@ class App:
         """Schedule a notify on the UI thread to avoid background‐thread UI calls."""
         sys.stderr.write(f"Error: {message}\n")
         self.notify_ui(f"Error: {message}", type="negative")
+
+    def _on_reset_pressed(self):
+        default_config = RespeakerConfig()
+
+        finder = AnnotationFinder(RespeakerParam)
+        defaults = finder.find(default_config)
+        currents = finder.find(self.config)
+
+        # collect matching pairs by name
+        matches = {}
+        for name, (df_default, anno_default) in defaults.items():
+            if name in currents:
+                df_current, anno_current = currents[name]
+                matches[name] = (df_default, df_current)
+
+        # now you can update all df
+        for name, (df_default, df_current) in matches.items():
+            df_current.value = df_default.value
+
+        # update all df
+        ui.notify("Configuration has been reset!", color="positive")
 
     def apply_status(self):
         if self.is_connected.value:
@@ -91,6 +117,9 @@ class App:
 
         with ui.row(align_items="center"):
             self._last_updated_label = ui.label("-").classes("text-sm")
+
+        with ui.row(align_items="center"):
+            self._reset_button = ui.button("Reset Config", on_click=self._on_reset_pressed)
 
         ui.separator().classes("my-1")
 
