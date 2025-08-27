@@ -51,7 +51,7 @@ class RespeakerService:
         try:
             self._client.connect()
         except Exception as ex:
-            raise RuntimeError(str(ex))
+            raise RuntimeError(str(ex)) from ex
 
         # verify device responds by reading one registered param
         if self._registry:
@@ -83,7 +83,7 @@ class RespeakerService:
         from duit.annotation.AnnotationFinder import AnnotationFinder
 
         finder = AnnotationFinder(RespeakerParam)
-        for name, (df, anno) in finder.find(model).items():
+        for _field_name, (df, anno) in finder.find(model).items():
             reg = RespeakerRegistration(df, anno)
             self._registry.append(reg)
             if anno.rw == "rw":
