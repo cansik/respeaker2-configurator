@@ -36,4 +36,4 @@ class RespeakerParam(Annotation):
 
     @staticmethod
     def _get_annotation_attribute_name() -> str:
-        return f"_respeaker_param_annotation"
+        return "_respeaker_param_annotation"
