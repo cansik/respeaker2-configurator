@@ -1,12 +1,13 @@
+import asyncio
 import os
 import sys
 from datetime import datetime
 from multiprocessing import freeze_support
 from typing import Optional
 
-from duit.annotation.AnnotationFinder import AnnotationFinder
+from usb.core import USBError
 
-from respeaker2.RespeakerParam import RespeakerParam
+from respeaker2.RespeakerDFU import RespeakerDFU
 
 # suppress stdout/stderr and macOS in frozen builds
 if sys.stdout is None or sys.stderr is None:
@@ -52,13 +53,20 @@ class App:
         self._reset_button: Optional[ui.button] = None
 
         self.is_first_run = True
+        self.suppress_connection_notifications = False
 
     def _on_connected(self, _):
         self.is_connected.value = True
+
+        if self.suppress_connection_notifications:
+            return
         self.notify_ui("Device connected!", type="positive")
 
     def _on_disconnected(self, _):
         self.is_connected.value = False
+
+        if self.suppress_connection_notifications:
+            return
         self.notify_ui("Device disconnected!", type="info")
 
     def _on_error(self, message: str) -> None:
@@ -66,26 +74,59 @@ class App:
         sys.stderr.write(f"Error: {message}\n")
         self.notify_ui(f"Error: {message}", type="negative")
 
-    def _on_reset_pressed(self):
-        default_config = RespeakerConfig()
+    async def _ask_question(self, question: str, true_answer: str = "Yes", false_answer: str = "No") -> bool:
+        with ui.dialog() as dialog, ui.card():
+            ui.label(question)
+            with ui.row():
+                ui.button(true_answer, on_click=lambda: dialog.submit(True))
+                ui.button(false_answer, on_click=lambda: dialog.submit(False))
 
-        finder = AnnotationFinder(RespeakerParam)
-        defaults = finder.find(default_config)
-        currents = finder.find(self.config)
+        return await dialog
 
-        # collect matching pairs by name
-        matches = {}
-        for name, (df_default, anno_default) in defaults.items():
-            if name in currents:
-                df_current, anno_current = currents[name]
-                matches[name] = (df_default, df_current)
+    async def _on_reset_pressed(self):
+        if not await self._ask_question("Are you sure?", true_answer="Reset", false_answer="Abort"):
+            return
 
-        # now you can update all df
-        for name, (df_default, df_current) in matches.items():
-            df_current.value = df_default.value
+        n = ui.notification(timeout=None, spinner=True, icon="restart_alt")
 
-        # update all df
-        ui.notify("Configuration has been reset!", color="positive")
+        n.message = "disconnecting device..."
+        await asyncio.sleep(0.1)
+        self.service.disconnect()
+
+        n.message = "looking for dfu..."
+        await asyncio.sleep(0.1)
+        RespeakerDFU.wait_for_runtime_device()
+
+        n.message = "connecting to dfu..."
+        await asyncio.sleep(0.1)
+        dfu = RespeakerDFU()
+        with dfu:
+            try:
+                n.message = "resetting..."
+                await asyncio.sleep(0.1)
+                dfu.revert_to_factory()
+
+                n.message = "rebooting..."
+                await asyncio.sleep(0.1)
+                dfu.leave_dfu_and_reboot()
+            except USBError as ex:
+                print(f"Error resetting device: {ex}")
+                n.dismiss()
+                ui.notify("Error resetting device!", type="negative")
+                await asyncio.sleep(0.1)
+                return
+
+        n.message = "waiting for device..."
+        await asyncio.sleep(0.1)
+        RespeakerDFU.wait_for_runtime_device()
+
+        n.message = "connecting to device..."
+        await asyncio.sleep(0.1)
+        self.service.connect()
+        n.dismiss()
+
+        ui.notify("Device has been reset!", type="positive")
+        await asyncio.sleep(0.1)
 
     def apply_status(self):
         if self.is_connected.value:
@@ -119,7 +160,7 @@ class App:
             self._last_updated_label = ui.label("-").classes("text-sm")
 
         with ui.row(align_items="center"):
-            self._reset_button = ui.button("Reset Config", on_click=self._on_reset_pressed)
+            self._reset_button = ui.button("Factory Reset", on_click=self._on_reset_pressed)
 
         ui.separator().classes("my-1")
 
