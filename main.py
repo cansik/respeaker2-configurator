@@ -14,13 +14,13 @@ if sys.stdout is None or sys.stderr is None:
     sys.stderr = open(os.devnull, "w")
 freeze_support()
 
-from duit.model.DataField import DataField
-from duit.ui.nicegui.NiceGUIPropertyPanel import NiceGUIPropertyPanel
-from duit.ui.nicegui.NiceGUIPropertyRegistry import init_nicegui_registry
-from nicegui import app, ui
+from duit.model.DataField import DataField  # noqa: E402
+from duit.ui.nicegui.NiceGUIPropertyPanel import NiceGUIPropertyPanel  # noqa: E402
+from duit.ui.nicegui.NiceGUIPropertyRegistry import init_nicegui_registry  # noqa: E402
+from nicegui import app, ui  # noqa: E402
 
-from respeaker2.RespeakerConfig import RespeakerConfig
-from respeaker2.RespeakerService import RespeakerService
+from respeaker2.RespeakerConfig import RespeakerConfig  # noqa: E402
+from respeaker2.RespeakerService import RespeakerService  # noqa: E402
 
 
 class App:
